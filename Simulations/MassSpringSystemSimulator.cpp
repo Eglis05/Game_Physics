@@ -151,17 +151,17 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 	switch (m_iTestCase)
 	{
 	case 0:
-		setMass(10.0f);
-		setDampingFactor(0.0f);
-		setStiffness(40.0f);
-		applyExternalForce(Vec3(0, 0, 0));
-		p0 = addMassPoint(Vec3(0.0, 0.0f, 0), Vec3(-1.0, 0.0f, 0), false);
-		p1 = addMassPoint(Vec3(0.0, 2.0f, 0), Vec3(1.0, 0.0f, 0), false);
-		addSpring(p0, p1, 1.0);
+		//setMass(10.0f);
+		//setDampingFactor(0.0f);
+		//setStiffness(40.0f);
+		//applyExternalForce(Vec3(0, 0, 0));
+		//p0 = addMassPoint(Vec3(0.0, 0.0f, 0), Vec3(-1.0, 0.0f, 0), false);
+		//p1 = addMassPoint(Vec3(0.0, 2.0f, 0), Vec3(1.0, 0.0f, 0), false);
+		//addSpring(p0, p1, 1.0);
 		cout << "Teapot !\n";
-		for (int i = 0; i < 10; i++)
-			simulateTimestep(0.005);;
-		cout << "Finished 10 timesteps" << endl;
+		//for (int i = 0; i < 10; i++)
+		//	simulateTimestep(0.005);;
+		//cout << "Finished 10 timesteps" << endl;
 		break;
 	case 1:
 		cout << "Random Object!\n";
@@ -200,20 +200,12 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 Vec3 MassSpringSystemSimulator::calculateForces(int index, int mass_nr)
 {
 	Vec3 total_forces = m_externalForce;
-	if (getPositionOfMassPoint(mass_nr).y > 0)
-		total_forces += Vec3(0, -9.8 * m_fMass, 0); //gravity
-	else
-		total_forces += Vec3(0, 9.8 * m_fMass, 0);
-
-	cout << index << " " << springs[index].getMassOne() << endl;
 	Vec3 subtractions = getPositionOfMassPoint(springs[index].getMassOne()) - getPositionOfMassPoint(springs[index].getMassTwo());
 	if (mass_nr == springs[index].getMassTwo())
 		subtractions *= (-1);
-	cout << "Subtractions: " << subtractions << endl;
-	double l = norm(subtractions);
-	cout << "Norm: " << l << endl;
-	total_forces -= m_fStiffness * (l - springs[index].getInitialLength()) / l * subtractions;
 
+	double l = norm(subtractions);
+	total_forces -= m_fStiffness * (l - springs[index].getInitialLength()) / l * subtractions;
 	return total_forces;
 }
 
@@ -227,20 +219,12 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 		{
 			Vec3 total_force_one = calculateForces(i, springs[i].getMassOne());
 			Vec3 total_force_two = calculateForces(i, springs[i].getMassTwo());
-			cout << total_force_one << endl;
 			int mass_one = springs[i].getMassOne();
-			Vec3 new_pos = getPositionOfMassPoint(mass_one) + timeStep * getVelocityOfMassPoint(mass_one);
-			masses[mass_one].setPosition(new_pos);
+			masses[mass_one].setPosition(getPositionOfMassPoint(mass_one) + timeStep * getVelocityOfMassPoint(mass_one));
 			masses[mass_one].setVelocity(getVelocityOfMassPoint(mass_one) + timeStep / m_fMass * total_force_one);
-			cout << getPositionOfMassPoint(mass_one).x << endl;
-			cout << getVelocityOfMassPoint(mass_one) << endl;
 			int mass_two = springs[i].getMassTwo();
 			masses[mass_two].setPosition(getPositionOfMassPoint(mass_two) + timeStep * getVelocityOfMassPoint(mass_two));
 			masses[mass_two].setVelocity(getVelocityOfMassPoint(mass_two) + timeStep / m_fMass * total_force_two);
-			cout << getPositionOfMassPoint(mass_two).x << endl;
-			cout << getVelocityOfMassPoint(mass_two) << endl;
-			//int nothing;
-			//cin >> nothing;
 		}
 		break;
 	case MIDPOINT:
