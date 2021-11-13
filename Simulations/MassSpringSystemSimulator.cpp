@@ -228,7 +228,38 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 		}
 		break;
 	case MIDPOINT:
-		masses[0].setPosition(Vec3(2, 2, 2));
+		//masses[0].setPosition(Vec3(2, 2, 2));
+
+		for (size_t i = 0; i < springs.size(); i++)
+		{
+			//calculate half timeStep h
+			float h_timeStep = timeStep / 2.0f;
+			int mass_one = springs[i].getMassOne();
+			int mass_two = springs[i].getMassTwo();
+			//get total Force on mass one and two respectivly
+			Vec3 total_force_one = calculateForces(i, mass_one);
+			Vec3 total_force_two = calculateForces(i, mass_two);
+			//saved for later use
+			Vec3 mass_one_pos = getPositionOfMassPoint(mass_one);
+			Vec3 mass_one_vel = getVelocityOfMassPoint(mass_one);
+			Vec3 mass_two_pos = getPositionOfMassPoint(mass_two);
+			Vec3 mass_two_vel = getVelocityOfMassPoint(mass_two);
+			//calculate and save intermediate pos
+			masses[mass_one].setPosition(mass_one_pos + h_timeStep * mass_one_vel);
+			masses[mass_one].setVelocity(mass_one_vel + h_timeStep * total_force_one);
+			masses[mass_two].setPosition(mass_two_pos + h_timeStep * mass_two_vel);
+			masses[mass_two].setVelocity(mass_two_vel + h_timeStep * total_force_two);
+			//recalculate force with intermediate pos
+			total_force_one = calculateForces(i, mass_one);
+			total_force_two = calculateForces(i, mass_two);
+			//calculate final pos and vel
+			masses[mass_one].setPosition(mass_one_pos + timeStep * getVelocityOfMassPoint(mass_one));
+			masses[mass_one].setVelocity(mass_one_vel + timeStep * total_force_one);
+			masses[mass_two].setPosition(mass_two_pos + timeStep * getVelocityOfMassPoint(mass_two));
+			masses[mass_two].setVelocity(mass_two_vel + timeStep * total_force_two);
+
+		}
+
 		break;
 	default:
 		break;
