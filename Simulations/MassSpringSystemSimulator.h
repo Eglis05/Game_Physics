@@ -65,7 +65,7 @@ public:
 	void applyExternalForce(Vec3 force);
 
 	// Extra Functions
-	Vec3 calculateForces(int index);
+	Vec3 calculateForces(int index, int mass_nr);
 	void drawSomeRandomObjects();
 	void drawMovableTeapot();
 	void drawTriangle();
