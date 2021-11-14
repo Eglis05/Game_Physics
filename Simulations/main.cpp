@@ -26,7 +26,7 @@ using namespace GamePhysics;
 //#define SPH_SYSTEM
 
 #ifdef TEMPLATE_DEMO
-#include "TemplateSimulator.h"
+//#include "TemplateSimulator.h"
 #endif
 #ifdef MASS_SPRING_SYSTEM
 #include "MassSpringSystemSimulator.h"

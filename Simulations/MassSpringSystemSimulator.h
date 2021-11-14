@@ -69,6 +69,7 @@ public:
 	void drawSomeRandomObjects();
 	void drawMovableTeapot();
 	void drawTriangle();
+	void drawSpringObjects();
 	
 	// Do Not Change
 	void setIntegrator(int integrator) {
