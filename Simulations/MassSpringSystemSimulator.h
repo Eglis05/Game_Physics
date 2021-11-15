@@ -70,8 +70,8 @@ public:
 	//void drawMovableTeapot();
 	//void drawTriangle();
 	void drawSpringObjects();
-	void setupScene();
-	void setupDemoScene();
+	void setupComplexScene();
+	void setupSimpleScene();
 	
 	// Do Not Change
 	void setIntegrator(int integrator) {
