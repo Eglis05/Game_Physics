@@ -134,6 +134,9 @@ void MassSpringSystemSimulator::reset() {
 void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 {
 	this->DUC = DUC;
+	TwEnumVal integratorsEV[] = { { EULER, "Euler" }, { MIDPOINT, "Midpoint" } };
+	TwType twIntegrator = TwDefineEnum("Integrator", integratorsEV, 2);
+
 	switch (m_iTestCase)
 	{
 	case 0: //Demo 2: Euler
@@ -148,8 +151,6 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 		TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01 step=0.1");
 		TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0 step=0.1");
 		//TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping, "min=0 max=1");
-		TwEnumVal integratorsEV[] = { {EULER, "Euler"}, {MIDPOINT, "Midpoint"} };
-		TwType twIntegrator = TwDefineEnum("Integrator", integratorsEV, 2);
 		TwAddVarRW(DUC->g_pTweakBar, "Integrator", twIntegrator, &m_iIntegrator, "");
 		// TwAddVarRW(DUC->g_pTweakBar, "Integrator", TW_TYPE_INT32, &m_iIntegrator, "min=0 max=2 step=2");
 		TwAddVarRW(DUC->g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &m_fSphereSize, "min=0.01 max=0.5 step=0.01");
