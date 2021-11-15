@@ -66,10 +66,12 @@ public:
 
 	// Extra Functions
 	Vec3 calculateForces(int index, int mass_nr);
-	void drawSomeRandomObjects();
-	void drawMovableTeapot();
-	void drawTriangle();
+	//void drawSomeRandomObjects();
+	//void drawMovableTeapot();
+	//void drawTriangle();
 	void drawSpringObjects();
+	void setupScene();
+	void setupDemoScene();
 	
 	// Do Not Change
 	void setIntegrator(int integrator) {
@@ -87,6 +89,7 @@ private:
 	vector<Mass> masses;
 	vector<Spring> springs;
 	float m_fSphereSize;
+	float m_fBounce;
 
 	// UI Attributes
 	Vec3 m_externalForce;
