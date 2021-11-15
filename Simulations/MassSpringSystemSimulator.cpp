@@ -1,5 +1,13 @@
 #include "MassSpringSystemSimulator.h"
 
+const char* MassSpringSystemSimulator::getTestCasesStr() {
+	return "Demo 2: EULER, Demo 4: Complex, Demo 3: MIDPOINT";
+}
+
+const int EULER_DEMO = 0;
+const int COMPLEX_DEMO = 1;
+const int MIDPOINT_DEMO = 2;
+
 Mass::Mass(Vec3 p, Vec3 v, bool isfixed)
 {
 	position = p;
@@ -56,7 +64,7 @@ float Spring::getInitialLength()
 
 MassSpringSystemSimulator::MassSpringSystemSimulator()
 {
-	m_iTestCase = 0;
+	m_iTestCase = EULER_DEMO;
 	m_iIntegrator = EULER;
 	m_externalForce = Vec3(0,-1.0f,0);
 	m_fMass = 1.0f;
@@ -117,10 +125,6 @@ void MassSpringSystemSimulator::applyExternalForce(Vec3 force)
 {
 	m_externalForce = force;
 }
- 
-const char* MassSpringSystemSimulator::getTestCasesStr() {
-	return "Demo 2: EULER, Demo 4, Demo 3: MIDPOINT";
-}
 
 void MassSpringSystemSimulator::reset() {
 	m_mouse.x = m_mouse.y = 0;
@@ -139,7 +143,7 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 
 	switch (m_iTestCase)
 	{
-	case 0: //Demo 2: Euler
+	case EULER_DEMO: //Demo 2: Euler
 		//set integrator to EULER
 		m_iIntegrator = EULER;
 		TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01 step=0.1");
@@ -147,16 +151,15 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 		//TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping, "min=0 max=1");
 		TwAddVarRW(DUC->g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &m_fSphereSize, "min=0.01 max=0.5 step=0.01");	
 		break;
-	case 1: //Demo 4: Complex Scene
+	case COMPLEX_DEMO: //Demo 4: Complex Scene
 		TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01 step=0.1");
 		TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0 step=0.1");
 		//TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping, "min=0 max=1");
 		TwAddVarRW(DUC->g_pTweakBar, "Integrator", twIntegrator, &m_iIntegrator, "");
-		// TwAddVarRW(DUC->g_pTweakBar, "Integrator", TW_TYPE_INT32, &m_iIntegrator, "min=0 max=2 step=2");
 		TwAddVarRW(DUC->g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &m_fSphereSize, "min=0.01 max=0.5 step=0.01");
 		TwAddVarRW(DUC->g_pTweakBar, "Bounce", TW_TYPE_FLOAT, &m_fBounce, "min=0 max=0.9 step=0.1");
 		break;
-	case 2: //Demo 3: Midpoint
+	case MIDPOINT_DEMO: //Demo 3: Midpoint
 		//set integrator to MIDPOINT
 		m_iIntegrator = MIDPOINT;
 		TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01 step=0.1");
@@ -175,20 +178,20 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 	int p1;
 	switch (m_iTestCase)
 	{
-	case 0:
+	case EULER_DEMO:
 		cout << "Demo 2: EULER-Simulation\n";
-		m_iIntegrator = 0;
-		setupDemoScene();
+		m_iIntegrator = EULER;
+		setupSimpleScene();
 		break;
-	case 1:
+	case COMPLEX_DEMO:
 		cout << "Demo 4: Complex Scene\n";
-		m_iIntegrator = 0;
-		setupScene();
+		m_iIntegrator = EULER;
+		setupComplexScene();
 		break;
-	case 2:
+	case MIDPOINT_DEMO:
 		cout << "Demo 3: MIDPOINT-Simulation\n";
-		m_iIntegrator = 2;
-		setupDemoScene();
+		m_iIntegrator = MIDPOINT;
+		setupSimpleScene();
 		break;
 	default:
 		cout << "Empty Test!\n";
@@ -196,7 +199,7 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 	}
 }
 
-void MassSpringSystemSimulator::setupScene()
+void MassSpringSystemSimulator::setupComplexScene()
 {
 	int p0 = addMassPoint(Vec3(0.0f, 0, 0), Vec3(0, 0, 0), false); //mass 0
 	int p1 = addMassPoint(Vec3(1.0f, 0, 0), Vec3(0, 0, 0), false); //mass 1 etc..
@@ -242,7 +245,7 @@ void MassSpringSystemSimulator::setupScene()
 	addSpring(p5, p7, 1.0);
 }
 
-void MassSpringSystemSimulator::setupDemoScene()
+void MassSpringSystemSimulator::setupSimpleScene()
 {
 	int p0 = addMassPoint(Vec3(0.0, 0.0f, 0), Vec3(-1.0f, 0, 0), false); //mass 0
 	int p1 = addMassPoint(Vec3(0.0, 2.0f, 0), Vec3(1.0f, 0, 0), false); //mass 1
@@ -279,7 +282,7 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 Vec3 MassSpringSystemSimulator::calculateForces(int index, int mass_nr)
 {
 	Vec3 total_forces = Vec3();
-	if(m_iTestCase == 1) 
+	if(m_iTestCase == COMPLEX_DEMO) 
 		total_forces = m_externalForce;
 	Vec3 subtractions = getPositionOfMassPoint(springs[index].getMassOne()) - getPositionOfMassPoint(springs[index].getMassTwo());
 	if (mass_nr == springs[index].getMassTwo())
@@ -353,7 +356,7 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 	}
 
 	//Check for collision with floor only for Demo 4
-	if (m_iTestCase == 1)
+	if (m_iTestCase == COMPLEX_DEMO)
 	{
 		for (int i = 0; i < masses.size(); i++)
 		{
@@ -371,32 +374,10 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 	}
 }
 
-/**Original Drawing Functions
-void MassSpringSystemSimulator::drawSomeRandomObjects()
-{
-	std::mt19937 eng;
-	std::uniform_real_distribution<float> randCol(0.0f, 1.0f);
-	std::uniform_real_distribution<float> randPos(-0.5f, 0.5f);
-	for (int i = 0; i < getNumberOfMassPoints(); i++)
-	{
-		DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(randCol(eng), randCol(eng), randCol(eng)));
-		DUC->drawSphere(Vec3(randPos(eng), randPos(eng), randPos(eng)), Vec3(m_fSphereSize, m_fSphereSize, m_fSphereSize));
-	}
-}
-
-void MassSpringSystemSimulator::drawMovableTeapot()
-{
-	DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(0.97, 0.86, 1));
-	DUC->drawTeapot(Vec3(0,0,0), Vec3(0,0,0), Vec3(0.5, 0.5, 0.5));
-}
-
-void MassSpringSystemSimulator::drawTriangle()
-{
-	DUC->DrawTriangleUsingShaders();
-}
-*/
-
-void MassSpringSystemSimulator::drawSpringObjects()
+/**
+ * This function draws the system class springs 
+ **/
+void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
 	DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(0.97, 0.86, 1));
 	for (int i = 0; i < springs.size(); i++)
@@ -411,23 +392,18 @@ void MassSpringSystemSimulator::drawSpringObjects()
 	}
 }
 
-void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
-{
-	drawSpringObjects();
-	//switch (m_iTestCase)
-	//{
-	//case 0: drawSpringObjects(); break;
-	//case 1: drawSpringObjects(); break;
-	//case 2: drawSpringObjects(); break;
-	//}
-}
-
+/**
+ * Mouse interactions are not working
+ **/
 void MassSpringSystemSimulator::onClick(int x, int y)
 {
 	m_trackmouse.x = x;
 	m_trackmouse.y = y;
 }
 
+/**
+ * Mouse interactions are not working
+ **/
 void MassSpringSystemSimulator::onMouse(int x, int y)
 {
 	m_oldtrackmouse.x = x;
