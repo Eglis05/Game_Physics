@@ -8,11 +8,15 @@ public:
 	void setVelocity(Vec3 v);
 	void setOrientation(Quat o);
 	Vec3 getPosition();
+	Vec3 getLinearVelocity();
+	Vec3 getAngularVelocity();
+	void applyForce(Vec3 loc, Vec3 force);
 private:
 	Vec3 position;
 	Vec3 size;
 	int mass;
-	Vec3 velocity;
+	Vec3 linear_velocity;
+	Vec3 angular_velocity;
 	Quat orientation;
 };
 

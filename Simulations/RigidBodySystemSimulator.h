@@ -40,6 +40,7 @@ private:
 	// RigidBodySystem * m_pRigidBodySystem; 
 	vector<RigidBodySystem> m_RigidBodySystem;
 	Vec3 m_externalForce;
+	int m_iIntegrator;
 
 	// UI Attributes
 	Point2D m_mouse;

@@ -14,6 +14,7 @@ RigidBodySystemSimulator::RigidBodySystemSimulator()
 {
 	m_iTestCase = TESTCASEUSEDTORUNTEST;
 	m_externalForce = Vec3(0, -1.0f, 0);
+	m_iIntegrator = 0;
 }
 
 void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity)
@@ -27,7 +28,7 @@ void RigidBodySystemSimulator::setOrientationOf(int i, Quat orientation)
 }
 
 void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
-{]
+{
 	m_RigidBodySystem.push_back(RigidBodySystem(position, size, mass));
 }
 
@@ -41,61 +42,65 @@ Vec3 RigidBodySystemSimulator::getPositionOfRigidBody(int i)
 	return m_RigidBodySystem[i].getPosition();
 }
 
-Vec3 MassSpringSystemSimulator::getVelocityOfMassPoint(int index)
+Vec3 RigidBodySystemSimulator::getLinearVelocityOfRigidBody(int i)
 {
-	return masses[index].getVelocity();
+	return m_RigidBodySystem[i].getLinearVelocity();
 }
 
-void MassSpringSystemSimulator::applyExternalForce(Vec3 force)
+Vec3 RigidBodySystemSimulator::getAngularVelocityOfRigidBody(int i)
 {
-	m_externalForce = force;
+	return m_RigidBodySystem[i].getAngularVelocity();
 }
 
-void MassSpringSystemSimulator::reset() {
+void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
+{
+	m_RigidBodySystem[i].applyForce(loc, force);
+}
+
+void RigidBodySystemSimulator::reset() {
 	m_mouse.x = m_mouse.y = 0;
 	m_trackmouse.x = m_trackmouse.y = 0;
 	m_oldtrackmouse.x = m_oldtrackmouse.y = 0;
-	//Clear all masses and springs
-	masses.clear();
-	springs.clear();
+	//Clear all bodies
+	m_RigidBodySystem.clear();
 }
 
-void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
+void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 {
 	this->DUC = DUC;
-	TwEnumVal integratorsEV[] = { { EULER, "Euler" }, { MIDPOINT, "Midpoint" } };
+	TwEnumVal integratorsEV[] = { { 0, "Euler" }, { 1, "Midpoint" } };
 	TwType twIntegrator = TwDefineEnum("Integrator", integratorsEV, 2);
 
 	switch (m_iTestCase)
 	{
 	case EULER_DEMO: //Demo 2: Euler
 		//set integrator to EULER
-		m_iIntegrator = EULER;
-		TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01 step=0.1");
-		TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0 step=0.1");
+		m_iIntegrator = 0;
+		//TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01 step=0.1");
+		//TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0 step=0.1");
 		//TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping, "min=0 max=1");
-		TwAddVarRW(DUC->g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &m_fSphereSize, "min=0.01 max=0.5 step=0.01");
+		//TwAddVarRW(DUC->g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &m_fSphereSize, "min=0.01 max=0.5 step=0.01");
 		break;
 	case COMPLEX_DEMO: //Demo 4: Complex Scene
-		TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01 step=0.1");
-		TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0 step=0.1");
+		//TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01 step=0.1");
+		//TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0 step=0.1");
 		//TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping, "min=0 max=1");
 		TwAddVarRW(DUC->g_pTweakBar, "Integrator", twIntegrator, &m_iIntegrator, "");
-		TwAddVarRW(DUC->g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &m_fSphereSize, "min=0.01 max=0.5 step=0.01");
-		TwAddVarRW(DUC->g_pTweakBar, "Bounce", TW_TYPE_FLOAT, &m_fBounce, "min=0 max=0.9 step=0.1");
+		//TwAddVarRW(DUC->g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &m_fSphereSize, "min=0.01 max=0.5 step=0.01");
+		//TwAddVarRW(DUC->g_pTweakBar, "Bounce", TW_TYPE_FLOAT, &m_fBounce, "min=0 max=0.9 step=0.1");
 		break;
 	case MIDPOINT_DEMO: //Demo 3: Midpoint
 		//set integrator to MIDPOINT
-		m_iIntegrator = MIDPOINT;
-		TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01 step=0.1");
-		TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0 step=0.1");
+		//m_iIntegrator = MIDPOINT;
+		//TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01 step=0.1");
+		//TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0 step=0.1");
 		//TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping, "min=0 max=1");
-		TwAddVarRW(DUC->g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &m_fSphereSize, "min=0.01 max=0.5 step=0.01");
+		//TwAddVarRW(DUC->g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &m_fSphereSize, "min=0.01 max=0.5 step=0.01");
 		break;
 	}
 }
 
-void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
+void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 {
 	m_iTestCase = testCase;
 	reset();
@@ -105,18 +110,18 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 	{
 	case EULER_DEMO:
 		cout << "Demo 2: EULER-Simulation\n";
-		m_iIntegrator = EULER;
-		setupSimpleScene();
+		//m_iIntegrator = EULER;
+		//setupSimpleScene();
 		break;
 	case COMPLEX_DEMO:
 		cout << "Demo 4: Complex Scene\n";
-		m_iIntegrator = EULER;
-		setupComplexScene();
+		//m_iIntegrator = EULER;
+		//setupComplexScene();
 		break;
 	case MIDPOINT_DEMO:
 		cout << "Demo 3: MIDPOINT-Simulation\n";
-		m_iIntegrator = MIDPOINT;
-		setupSimpleScene();
+		//m_iIntegrator = MIDPOINT;
+		//setupSimpleScene();
 		break;
 	default:
 		cout << "Empty Test!\n";
@@ -124,7 +129,8 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 	}
 }
 
-void MassSpringSystemSimulator::setupComplexScene()
+/*
+void RigidBodySystemSimulator::setupComplexScene()
 {
 	int p0 = addMassPoint(Vec3(0.0f, 0, 0), Vec3(0, 0, 0), false); //mass 0
 	int p1 = addMassPoint(Vec3(1.0f, 0, 0), Vec3(0, 0, 0), false); //mass 1 etc..
@@ -170,7 +176,7 @@ void MassSpringSystemSimulator::setupComplexScene()
 	addSpring(p5, p7, 1.0);
 }
 
-void MassSpringSystemSimulator::setupSimpleScene()
+void RigidBodySystemSimulator::setupSimpleScene()
 {
 	int p0 = addMassPoint(Vec3(0.0, 0.0f, 0), Vec3(-1.0f, 0, 0), false); //mass 0
 	int p1 = addMassPoint(Vec3(0.0, 2.0f, 0), Vec3(1.0f, 0, 0), false); //mass 1
@@ -181,8 +187,9 @@ void MassSpringSystemSimulator::setupSimpleScene()
 
 	addSpring(p0, p1, 1.0); //Spring Stiffness
 }
+*/
 
-void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
+void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 {
 	// Apply the mouse deltas to g_vfMovableObjectPos (move along cameras view plane)
 	Point2D mouseDiff;
@@ -203,8 +210,8 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 		//m_vfMovableObjectFinalPos = m_vfMovableObjectPos;
 	//}
 }
-
-Vec3 MassSpringSystemSimulator::calculateForces(int index, int mass_nr)
+/*
+Vec3 RigidBodySystemSimulator::calculateForces(int index, int mass_nr)
 {
 	Vec3 total_forces = Vec3();
 	if (m_iTestCase == COMPLEX_DEMO)
@@ -217,13 +224,15 @@ Vec3 MassSpringSystemSimulator::calculateForces(int index, int mass_nr)
 	total_forces -= m_fStiffness * (l - springs[index].getInitialLength()) / l * subtractions;
 	return total_forces;
 }
+*/
 
-void MassSpringSystemSimulator::simulateTimestep(float timeStep)
+void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
 	// update current setup for each frame
 	switch (m_iIntegrator)
 	{// handling different cases
-	case EULER:
+	/*
+	case 0:
 		for (size_t i = 0; i < springs.size(); i++)
 		{
 			Vec3 total_force_one = calculateForces(i, springs[i].getMassOne());
@@ -276,10 +285,11 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 		}
 
 		break;
+	*/
 	default:
 		break;
 	}
-
+	/*
 	//Check for collision with floor only for Demo 4
 	if (m_iTestCase == COMPLEX_DEMO)
 	{
@@ -297,14 +307,16 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			}
 		}
 	}
+	*/
 }
 
 /**
  * This function draws the system class springs
  **/
-void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
+void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
 	DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(0.97, 0.86, 1));
+	/*
 	for (int i = 0; i < springs.size(); i++)
 	{
 		DUC->beginLine();
@@ -315,12 +327,13 @@ void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateCont
 	{
 		DUC->drawSphere(getPositionOfMassPoint(i), Vec3(m_fSphereSize, m_fSphereSize, m_fSphereSize));
 	}
+	*/
 }
 
 /**
  * Mouse interactions are not working
  **/
-void MassSpringSystemSimulator::onClick(int x, int y)
+void RigidBodySystemSimulator::onClick(int x, int y)
 {
 	m_trackmouse.x = x;
 	m_trackmouse.y = y;
@@ -329,7 +342,7 @@ void MassSpringSystemSimulator::onClick(int x, int y)
 /**
  * Mouse interactions are not working
  **/
-void MassSpringSystemSimulator::onMouse(int x, int y)
+void RigidBodySystemSimulator::onMouse(int x, int y)
 {
 	m_oldtrackmouse.x = x;
 	m_oldtrackmouse.y = y;
