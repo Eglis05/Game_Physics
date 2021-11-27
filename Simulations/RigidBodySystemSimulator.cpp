@@ -228,66 +228,9 @@ Vec3 RigidBodySystemSimulator::calculateForces(int index, int mass_nr)
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
-	// update current setup for each frame
-	switch (m_iIntegrator)
-	{// handling different cases
-	/*
-	case 0:
-		for (size_t i = 0; i < springs.size(); i++)
-		{
-			Vec3 total_force_one = calculateForces(i, springs[i].getMassOne());
-			Vec3 total_force_two = calculateForces(i, springs[i].getMassTwo());
-			int mass_one = springs[i].getMassOne();
-			masses[mass_one].setPosition(getPositionOfMassPoint(mass_one) + timeStep * getVelocityOfMassPoint(mass_one));
-			masses[mass_one].setVelocity(getVelocityOfMassPoint(mass_one) + timeStep / m_fMass * total_force_one);
-			int mass_two = springs[i].getMassTwo();
-			masses[mass_two].setPosition(getPositionOfMassPoint(mass_two) + timeStep * getVelocityOfMassPoint(mass_two));
-			masses[mass_two].setVelocity(getVelocityOfMassPoint(mass_two) + timeStep / m_fMass * total_force_two);
-		}
-		break;
-	case MIDPOINT:
-		for (size_t i = 0; i < springs.size(); i++)
-		{
-			//calculate half and quarter timeStep h
-			float h_timeStep = timeStep / 2.0f;
-			float q_timeStep = timeStep / 4.0f;
-			int mass_one = springs[i].getMassOne();
-			int mass_two = springs[i].getMassTwo();
-
-			//saved for later use
-			Vec3 mass_one_pos = getPositionOfMassPoint(mass_one);
-			Vec3 mass_one_vel = getVelocityOfMassPoint(mass_one);
-			Vec3 mass_two_pos = getPositionOfMassPoint(mass_two);
-			Vec3 mass_two_vel = getVelocityOfMassPoint(mass_two);
-
-			//calculate and save quarter pos
-			masses[mass_one].setPosition(mass_one_pos + q_timeStep * mass_one_vel);
-			masses[mass_two].setPosition(mass_two_pos + q_timeStep * mass_two_vel);
-			//calculate force with quarter pos
-			Vec3 q_total_force_one = calculateForces(i, mass_one);
-			Vec3 q_total_force_two = calculateForces(i, mass_two);
-
-			//calculate half pos
-			masses[mass_one].setPosition(mass_one_pos + h_timeStep * mass_one_vel);
-			masses[mass_two].setPosition(mass_two_pos + h_timeStep * mass_two_vel);
-			//recalculate force with half pos
-			Vec3 h_total_force_one = calculateForces(i, mass_one);
-			Vec3 h_total_force_two = calculateForces(i, mass_two);
-
-			// calculate velocity with quarter pos force
-			masses[mass_one].setVelocity(mass_one_vel + h_timeStep / m_fMass * q_total_force_one);
-			masses[mass_two].setVelocity(mass_two_vel + h_timeStep / m_fMass * q_total_force_two);
-			//calculate final pos and velocity
-			masses[mass_one].setPosition(mass_one_pos + timeStep * getVelocityOfMassPoint(mass_one));
-			masses[mass_one].setVelocity(mass_one_vel + timeStep / m_fMass * h_total_force_one);
-			masses[mass_two].setPosition(mass_two_pos + timeStep * getVelocityOfMassPoint(mass_two));
-			masses[mass_two].setVelocity(mass_two_vel + timeStep / m_fMass * h_total_force_two);
-		}
-
-		break;
-	*/
-	default:
-		break;
+	for (int i = 0; i < getNumberOfRigidBodies(); i++)
+	{
+		m_RigidBodySystem[i].simulateStep(timeStep);
 	}
 	/*
 	//Check for collision with floor only for Demo 4
