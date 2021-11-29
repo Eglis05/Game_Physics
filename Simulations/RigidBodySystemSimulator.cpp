@@ -1,20 +1,27 @@
 #include "RigidBodySystemSimulator.h"
-//#include "RigidBodySystem.h"
+#include <Windows.h>
+#include <chrono>
+#include <thread>
+#include <iostream>
+#include <cstdlib>
+#include "collisionDetect.h"
+using namespace std;
 
 const char* RigidBodySystemSimulator::getTestCasesStr() {
-	return "Demo 2: EULER, Demo 4: Complex, Demo 3: MIDPOINT";
+	return "Demo 1: Simple One Step, Demo 2: Body Simulation, Demo 3: Two Body Collision, Demo 4: Complex";
 }
 
-const int EULER_DEMO = 0;
-const int COMPLEX_DEMO = 1;
-const int MIDPOINT_DEMO = 2;
+const int ONESTEP_DEMO = 0;
+const int BODYSIMULATION_DEMO = 1;
+const int COLLISION_DEMO = 2;
+const int COMPLEX_DEMO = 3;
 
 
 RigidBodySystemSimulator::RigidBodySystemSimulator()
 {
-	m_iTestCase = TESTCASEUSEDTORUNTEST;
-	m_externalForce = Vec3(0, -1.0f, 0);
-	m_iIntegrator = 0;
+	m_iTestCase = ONESTEP_DEMO;
+	m_externalForce = Vec3(0, 0, 0);
+	c_impulse = 0;
 }
 
 void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity)
@@ -52,6 +59,11 @@ Vec3 RigidBodySystemSimulator::getAngularVelocityOfRigidBody(int i)
 	return m_RigidBodySystem[i].getAngularVelocity();
 }
 
+Vec3 RigidBodySystemSimulator::getWorldVelocityOfRigidBody(int i, Vec3 loc)
+{
+	return m_RigidBodySystem[i].getWorldVelocity(loc);
+}
+
 void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 {
 	m_RigidBodySystem[i].applyForce(loc, force);
@@ -63,39 +75,27 @@ void RigidBodySystemSimulator::reset() {
 	m_oldtrackmouse.x = m_oldtrackmouse.y = 0;
 	//Clear all bodies
 	m_RigidBodySystem.clear();
+	m_externalForce = Vec3(0, 0, 0);
+	c_impulse = 0;
 }
 
 void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 {
 	this->DUC = DUC;
-	TwEnumVal integratorsEV[] = { { 0, "Euler" }, { 1, "Midpoint" } };
-	TwType twIntegrator = TwDefineEnum("Integrator", integratorsEV, 2);
 
 	switch (m_iTestCase)
 	{
-	case EULER_DEMO: //Demo 2: Euler
-		//set integrator to EULER
-		m_iIntegrator = 0;
-		//TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01 step=0.1");
-		//TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0 step=0.1");
-		//TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping, "min=0 max=1");
-		//TwAddVarRW(DUC->g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &m_fSphereSize, "min=0.01 max=0.5 step=0.01");
+	case ONESTEP_DEMO:
+		setupOneStep();
 		break;
-	case COMPLEX_DEMO: //Demo 4: Complex Scene
-		//TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01 step=0.1");
-		//TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0 step=0.1");
-		//TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping, "min=0 max=1");
-		TwAddVarRW(DUC->g_pTweakBar, "Integrator", twIntegrator, &m_iIntegrator, "");
-		//TwAddVarRW(DUC->g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &m_fSphereSize, "min=0.01 max=0.5 step=0.01");
-		//TwAddVarRW(DUC->g_pTweakBar, "Bounce", TW_TYPE_FLOAT, &m_fBounce, "min=0 max=0.9 step=0.1");
+	case BODYSIMULATION_DEMO:
+		setupBodySimulation();
 		break;
-	case MIDPOINT_DEMO: //Demo 3: Midpoint
-		//set integrator to MIDPOINT
-		//m_iIntegrator = MIDPOINT;
-		//TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01 step=0.1");
-		//TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0 step=0.1");
-		//TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping, "min=0 max=1");
-		//TwAddVarRW(DUC->g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &m_fSphereSize, "min=0.01 max=0.5 step=0.01");
+	case COLLISION_DEMO:
+		setupCollision();
+		break;
+	case COMPLEX_DEMO:
+		setupComplex();
 		break;
 	}
 }
@@ -104,90 +104,63 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 {
 	m_iTestCase = testCase;
 	reset();
-	int p0;
-	int p1;
+	cout << "Demo " << m_iTestCase + 1 << endl;
 	switch (m_iTestCase)
 	{
-	case EULER_DEMO:
-		cout << "Demo 2: EULER-Simulation\n";
-		//m_iIntegrator = EULER;
-		//setupSimpleScene();
+	case ONESTEP_DEMO:
+		setupOneStep();
+		break;
+	case BODYSIMULATION_DEMO:
+		setupBodySimulation();
+		break;
+	case COLLISION_DEMO:
+		setupCollision();
 		break;
 	case COMPLEX_DEMO:
-		cout << "Demo 4: Complex Scene\n";
-		//m_iIntegrator = EULER;
-		//setupComplexScene();
-		break;
-	case MIDPOINT_DEMO:
-		cout << "Demo 3: MIDPOINT-Simulation\n";
-		//m_iIntegrator = MIDPOINT;
-		//setupSimpleScene();
-		break;
-	default:
-		cout << "Empty Test!\n";
+		setupComplex();
 		break;
 	}
 }
 
-/*
-void RigidBodySystemSimulator::setupComplexScene()
+void RigidBodySystemSimulator::setupOneStep()
 {
-	int p0 = addMassPoint(Vec3(0.0f, 0, 0), Vec3(0, 0, 0), false); //mass 0
-	int p1 = addMassPoint(Vec3(1.0f, 0, 0), Vec3(0, 0, 0), false); //mass 1 etc..
-	int p2 = addMassPoint(Vec3(1.0f, 0, 1.0f), Vec3(0, 0, 0), false);
-	int p3 = addMassPoint(Vec3(0, 0, 1.0f), Vec3(0, 0, 0), false);
-
-	int p4 = addMassPoint(Vec3(0.0f, 1.0f, 0), Vec3(0, 0, 0), false);
-	int p5 = addMassPoint(Vec3(1.0f, 1.0f, 0), Vec3(0, 0, 0), false);
-	int p6 = addMassPoint(Vec3(1.0f, 1.0f, 1.0f), Vec3(0, 0, 0), false);
-	int p7 = addMassPoint(Vec3(0, 1.0f, 1.0f), Vec3(0, 0, 0), false);
-
-	m_fMass = 1;
-	m_fStiffness = 1;
-
-	//lower square
-	addSpring(p0, p1, 1.0);
-	addSpring(p1, p2, 1.0);
-	addSpring(p2, p3, 1.0);
-	addSpring(p3, p0, 1.0);
-	//upper square
-	addSpring(p4, p5, 1.0);
-	addSpring(p5, p6, 1.0);
-	addSpring(p6, p7, 1.0);
-	addSpring(p7, p4, 1.0);
-	//vertical Edges
-	addSpring(p0, p4, 1.0);
-	addSpring(p1, p5, 1.0);
-	addSpring(p2, p6, 1.0);
-	addSpring(p3, p7, 1.0);
-	//add vertical Cross-edges
-	addSpring(p0, p5, 1.0);
-	addSpring(p0, p7, 1.0);
-	addSpring(p1, p4, 1.0);
-	addSpring(p1, p6, 1.0);
-	addSpring(p2, p5, 1.0);
-	addSpring(p2, p7, 1.0);
-	addSpring(p3, p4, 1.0);
-	addSpring(p3, p6, 1.0);
-	//add horizontal Cross-edges
-	addSpring(p0, p2, 1.0);
-	addSpring(p1, p3, 1.0);
-	addSpring(p4, p6, 1.0);
-	addSpring(p5, p7, 1.0);
+	addRigidBody(Vec3(0.0f, 0.0f, 0.0f), Vec3(1.0f, 0.6f, 0.5f), 2.0f);
+	setOrientationOf(0, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.5));
+	applyForceOnBody(0, Vec3(0.3f, 0.5f, 0.25f), Vec3(1.0f, 1.0f, 0.0f));
+	simulateTimestep(2);
+	cout << "Linear Velocity: " << getLinearVelocityOfRigidBody(0) << endl;
+	cout << "Angular Velocity: " << getAngularVelocityOfRigidBody(0) << endl;
+	Vec3 x = Vec3(0.3, 0.5, 0.25);
+	cout << "Wolrd Space Velocity of Point " << x << " is: " << getWorldVelocityOfRigidBody(0, x) << endl;
+	this_thread::sleep_for(chrono::seconds(10));
 }
 
-void RigidBodySystemSimulator::setupSimpleScene()
+void RigidBodySystemSimulator::setupBodySimulation()
 {
-	int p0 = addMassPoint(Vec3(0.0, 0.0f, 0), Vec3(-1.0f, 0, 0), false); //mass 0
-	int p1 = addMassPoint(Vec3(0.0, 2.0f, 0), Vec3(1.0f, 0, 0), false); //mass 1
-
-	m_fMass = 10;
-	m_fStiffness = 40;
-
-
-	addSpring(p0, p1, 1.0); //Spring Stiffness
+	addRigidBody(Vec3(0.0f, 0.0f, 0.0f), Vec3(1.0f, 0.6f, 0.5f), 2.0f);
+	setOrientationOf(0, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.5));
+	applyForceOnBody(0, Vec3(0.3f, 0.5f, 0.25f), Vec3(1.0f, 1.0f, 0.0f));
+	for (int i = 0; i < 200; i++)
+		simulateTimestep(0.01);
+	cout << "Run for 200 steps of 0.01" << endl;
+	cout << "Linear Velocity: " << getLinearVelocityOfRigidBody(0) << endl;
+	cout << "Angular Velocity: " << getAngularVelocityOfRigidBody(0) << endl;
+	Vec3 x = Vec3(0.3, 0.5, 0.25);
+	cout << "Wolrd Space Velocity of Point " << x << " is: " << getWorldVelocityOfRigidBody(0, x) << endl;
+	this_thread::sleep_for(chrono::seconds(1));
 }
-*/
+
+void RigidBodySystemSimulator::setupCollision()
+{
+	testCheckCollision(0);
+	testCheckCollision(1);
+	testCheckCollision(2);
+}
+
+void RigidBodySystemSimulator::setupComplex()
+{
+
+}
 
 void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 {
@@ -210,21 +183,33 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 		//m_vfMovableObjectFinalPos = m_vfMovableObjectPos;
 	//}
 }
-/*
-Vec3 RigidBodySystemSimulator::calculateForces(int index, int mass_nr)
-{
-	Vec3 total_forces = Vec3();
-	if (m_iTestCase == COMPLEX_DEMO)
-		total_forces = m_externalForce;
-	Vec3 subtractions = getPositionOfMassPoint(springs[index].getMassOne()) - getPositionOfMassPoint(springs[index].getMassTwo());
-	if (mass_nr == springs[index].getMassTwo())
-		subtractions *= (-1);
 
-	double l = norm(subtractions);
-	total_forces -= m_fStiffness * (l - springs[index].getInitialLength()) / l * subtractions;
-	return total_forces;
+
+
+void RigidBodySystemSimulator::checkCollision(RigidBodySystem A, RigidBodySystem B)
+{
+	Mat4 A_world = A.getWorldMatrix();
+	Mat4 B_world = B.getWorldMatrix();
+	CollisionInfo info = checkCollisionSAT(A_world, B_world);
+	if (info.isValid)
+	{
+		Vec3 v_rel = A.getWorldVelocity(info.collisionPointWorld) - B.getWorldVelocity(info.collisionPointWorld);
+		if (dot(v_rel, info.normalWorld) < 0)
+		{
+			Vec3 x_a = info.collisionPointWorld - A.getPosition();
+			Vec3 x_b = info.collisionPointWorld - B.getPosition();
+			float impulse = -(1 + c_impulse) * dot(v_rel, info.normalWorld) /
+				(1.0 / A.getMass() + 1.0 / B.getMass() + dot(cross(A.getInertiaInv() * cross(x_a, info.normalWorld), x_a) +
+					cross(B.getInertiaInv() * cross(x_b, info.normalWorld), x_b), info.normalWorld));
+
+			A.setVelocity(A.getLinearVelocity() + impulse * info.normalWorld / A.getMass());
+			B.setVelocity(B.getLinearVelocity() + impulse * info.normalWorld / B.getMass());
+
+			A.setMomentum(A.getMomentum() + cross(x_a, impulse * info.normalWorld));
+			B.setMomentum(B.getMomentum() + cross(x_b, impulse * info.normalWorld));
+		}
+	}
 }
-*/
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
@@ -232,25 +217,14 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 	{
 		m_RigidBodySystem[i].simulateStep(timeStep);
 	}
-	/*
-	//Check for collision with floor only for Demo 4
-	if (m_iTestCase == COMPLEX_DEMO)
+
+	for (int i = 0; i < getNumberOfRigidBodies() - 1; i++)
 	{
-		for (int i = 0; i < masses.size(); i++)
+		for (int j = i + 1; j < getNumberOfRigidBodies(); j++)
 		{
-			Vec3 mass_pos = masses[i].getPosition();
-			Vec3 mass_vel = masses[i].getVelocity();
-			//simple collision detection and management
-			if (mass_pos.y <= (-1.0 + m_fSphereSize))
-			{
-				mass_pos.y = -1.0 + m_fSphereSize;
-				mass_vel.y = mass_vel.y * m_fBounce * -1;
-				masses[i].setPosition(mass_pos);
-				masses[i].setVelocity(mass_vel);
-			}
+			checkCollision(m_RigidBodySystem[i], m_RigidBodySystem[j]);
 		}
 	}
-	*/
 }
 
 /**
@@ -258,19 +232,11 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
  **/
 void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
-	DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(0.97, 0.86, 1));
-	/*
-	for (int i = 0; i < springs.size(); i++)
+	DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 2000, Vec3(0.5, 0.5, 0.5));
+	for (int i = 0; i < m_RigidBodySystem.size(); i++)
 	{
-		DUC->beginLine();
-		DUC->drawLine(getPositionOfMassPoint(springs[i].getMassOne()), Vec3(1, 0, 0), getPositionOfMassPoint(springs[i].getMassTwo()), Vec3(1, 0, 0));
-		DUC->endLine();
+		DUC->drawRigidBody(m_RigidBodySystem[i].getWorldMatrix());
 	}
-	for (int i = 0; i < masses.size(); i++)
-	{
-		DUC->drawSphere(getPositionOfMassPoint(i), Vec3(m_fSphereSize, m_fSphereSize, m_fSphereSize));
-	}
-	*/
 }
 
 /**

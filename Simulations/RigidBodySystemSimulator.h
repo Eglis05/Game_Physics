@@ -33,6 +33,14 @@ public:
 	void addRigidBody(Vec3 position, Vec3 size, int mass);
 	void setOrientationOf(int i,Quat orientation);
 	void setVelocityOf(int i, Vec3 velocity);
+	void setupOneStep();
+	void setupBodySimulation();
+	void setupCollision();
+	void setupComplex();
+	Vec3 getWorldVelocityOfRigidBody(int i, Vec3 loc);
+	void checkCollision(RigidBodySystem, RigidBodySystem);
+
+	int m_iTestCase;
 
 private:
 	// Attributes
@@ -40,7 +48,7 @@ private:
 	// RigidBodySystem * m_pRigidBodySystem; 
 	vector<RigidBodySystem> m_RigidBodySystem;
 	Vec3 m_externalForce;
-	int m_iIntegrator;
+	int c_impulse;
 
 	// UI Attributes
 	Point2D m_mouse;
