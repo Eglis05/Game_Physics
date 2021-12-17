@@ -19,7 +19,7 @@ const int COMPLEX_DEMO = 3;
 
 RigidBodySystemSimulator::RigidBodySystemSimulator()
 {
-	m_iTestCase = ONESTEP_DEMO;
+	m_iTestCase = BODYSIMULATION_DEMO;
 	m_externalForce = Vec3(0, 0, 0);
 	c_impulse = 0;
 }
@@ -232,7 +232,7 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
  **/
 void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
-	DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 2000, Vec3(0.5, 0.5, 0.5));
+	DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
 	for (int i = 0; i < m_RigidBodySystem.size(); i++)
 	{
 		DUC->drawRigidBody(m_RigidBodySystem[i].getWorldMatrix());

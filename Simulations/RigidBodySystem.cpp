@@ -122,7 +122,7 @@ void RigidBodySystem::simulateStep(float timeStep)
 	rot_mat.transpose();
 	i_inv *= rot_mat;
 	//cout << "I-1:" << i_inv << endl;
-	angular_velocity = i_inv * angular_momentum;
+	angular_velocity = i_inv.transformVector(angular_momentum);
 	//cout << "ang_v:" << angular_velocity << endl;
 }
 
