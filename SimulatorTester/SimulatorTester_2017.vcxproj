@@ -163,10 +163,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="PublicMassSpringSystemTests.cpp" />
-    <ClCompile Include="PublicRigidBodiesTests.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\AntTweakBar\src\AntTweakBar_2017.vcxproj">
       <Project>{b99e1fa1-c30a-45f2-9d57-9e9c21b2df42}</Project>
     </ProjectReference>
@@ -188,6 +184,9 @@
     <ProjectReference Include="..\Simulations\Demo_2017.vcxproj">
       <Project>{3cabed2c-12f1-4408-aaae-e2185a426f35}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="PublicMassSpringSystemTests.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
